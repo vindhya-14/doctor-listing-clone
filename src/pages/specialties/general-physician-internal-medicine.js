@@ -21,7 +21,7 @@ const DestinationPage = () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        `http://localhost:5000/api/doctors/list-doctor-with-filter`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/doctors/list-doctor-with-filter`, // Updated URL to use environment variable
         {
           params: filters,
         }

@@ -15,35 +15,36 @@ const DestinationPage = () => {
   });
   const [totalDoctors, setTotalDoctors] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  // Fetch doctor data from backend
   const fetchDoctors = async () => {
     setLoading(true);
+    setError("");
     try {
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/doctors/list-doctor-with-filter`, // Updated URL to use environment variable
+        `${process.env.NEXT_PUBLIC_API_URL}/api/doctors/list-doctor-with-filter`,
         {
           params: filters,
         }
       );
       setDoctors(response.data.doctors);
       setTotalDoctors(response.data.total);
-    } catch (error) {
-      console.error("Error fetching doctors:", error);
+    } catch (err) {
+      console.error("Error fetching doctors:", err);
+      setError("Failed to load doctor data. Please try again later.");
     }
     setLoading(false);
   };
 
-  // Effect to fetch doctors on page load and whenever filters change
   useEffect(() => {
     fetchDoctors();
   }, [filters]);
 
-  // Handle changes in filters
   const handleFiltersChange = (newFilters) => {
     setFilters((prevFilters) => ({
       ...prevFilters,
       ...newFilters,
+      page: newFilters.page ?? 1,
     }));
   };
 
@@ -56,20 +57,21 @@ const DestinationPage = () => {
           content="Find experienced general physicians in your city. Book appointments for internal medicine consultation."
         />
         <meta name="robots" content="index, follow" />
-        {/* Add more SEO meta tags as needed */}
       </Head>
 
       <header>
         <h1>Find a General Physician</h1>
       </header>
 
-      {/* Filters Section */}
       <Filters onChange={handleFiltersChange} filters={filters} />
 
-      {/* Doctors List */}
       <div className="doctor-list">
         {loading ? (
-          <p>Loading...</p>
+          <p>Loading doctors...</p>
+        ) : error ? (
+          <p style={{ color: "red" }}>{error}</p>
+        ) : doctors.length === 0 ? (
+          <p>No doctors found matching your filters.</p>
         ) : (
           doctors.map((doctor) => (
             <DoctorCard key={doctor._id} doctor={doctor} />
@@ -77,26 +79,28 @@ const DestinationPage = () => {
         )}
       </div>
 
-      {/* Pagination */}
-      <div className="pagination">
-        <button
-          onClick={() =>
-            handleFiltersChange({ page: Math.max(filters.page - 1, 1) })
-          }
-          disabled={filters.page <= 1}
-        >
-          Previous
-        </button>
-        <span>
-          Page {filters.page} of {Math.ceil(totalDoctors / filters.limit)}
-        </span>
-        <button
-          onClick={() => handleFiltersChange({ page: filters.page + 1 })}
-          disabled={filters.page * filters.limit >= totalDoctors}
-        >
-          Next
-        </button>
-      </div>
+      {doctors.length > 0 && (
+        <div className="pagination">
+          <button
+            onClick={() =>
+              handleFiltersChange({ page: Math.max(filters.page - 1, 1) })
+            }
+            disabled={filters.page <= 1}
+          >
+            Previous
+          </button>
+          <span>
+            Page {filters.page} of{" "}
+            {Math.ceil(totalDoctors / filters.limit) || 1}
+          </span>
+          <button
+            onClick={() => handleFiltersChange({ page: filters.page + 1 })}
+            disabled={filters.page * filters.limit >= totalDoctors}
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 };
